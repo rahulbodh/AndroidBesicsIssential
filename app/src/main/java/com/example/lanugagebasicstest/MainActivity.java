@@ -1,46 +1,75 @@
 package com.example.lanugagebasicstest;
 
+import android.Manifest;
+import android.content.Context;
+import android.content.pm.PackageManager;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.os.Bundle;
+import android.util.Log;
 
-import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
+import androidx.core.app.ActivityCompat;
+
+import com.example.lanugagebasicstest.databinding.ActivityMainBinding;
 
 public class MainActivity extends AppCompatActivity {
+
+    private LocationManager locationManager;
+    private ActivityMainBinding binding; // Binding for accessing layout views
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        EdgeToEdge.enable(this);
-        setContentView(R.layout.activity_main);
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
-            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
-            return insets;
-        });
 
-        long startTimer = System.currentTimeMillis();
-        System.out.println("startTimer: " + startTimer + " milliseconds");
+        // Inflate the layout using View Binding
+        binding = ActivityMainBinding.inflate(getLayoutInflater());
+        setContentView(binding.getRoot());
 
-        try {
-            Thread.sleep(2000); // Wait for 2 seconds
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
+        // Set up the button's onClick listener
+        binding.button.setOnClickListener(v -> detectEnvironment(this));
+
+        // Perform the initial environment detection
+        detectEnvironment(this);
+    }
+
+    public void detectEnvironment(Context context) {
+        locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
+
+        // Check location permissions
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+                ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // Request permissions if not granted
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 1);
+            return;
         }
 
-        long endTimer = System.currentTimeMillis();
-        System.out.println("endTimer: " + endTimer + " milliseconds");
+        try {
+            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 1, new LocationListener() {
+                @Override
+                public void onLocationChanged(Location location) {
+                    float accuracy = location.getAccuracy(); // Smaller values = better accuracy
+                    binding.accuracyTextView.setText("Accuracy: " + accuracy);
+                    Log.d("Location", "Accuracy: " + accuracy);
+                    if (accuracy < 20) { // Example threshold for outdoor environment
+                        binding.statusTextView.setText("Outdoor");
+                    } else {
+                        binding.statusTextView.setText("Indoor");
+                    }
+                }
 
-        long difference = endTimer - startTimer;
+                @Override
+                public void onStatusChanged(String provider, int status, Bundle extras) {}
 
-        long differenceInSeconds = difference / 1000;
-        long differenceInMinutes = difference / (1000 * 60);
+                @Override
+                public void onProviderEnabled(String provider) {}
 
-        System.out.println("Difference in milliseconds: " + difference);
-        System.out.println("Difference in seconds: " + differenceInSeconds);
-        System.out.println("Difference in minutes: " + differenceInMinutes);
-
+                @Override
+                public void onProviderDisabled(String provider) {}
+            });
+        } catch (SecurityException e) {
+            e.printStackTrace();
+        }
     }
 }
