@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">LanugageBasicsTest</string>
+    <string name="accessibility_service_description">this is use for keyboard in used or not\n</string>
 </resources>

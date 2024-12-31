@@ -2,6 +2,7 @@ package com.example.lanugagebasicstest;
 
 import android.Manifest;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationListener;
@@ -13,6 +14,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
 import com.example.lanugagebasicstest.databinding.ActivityMainBinding;
+import com.example.lanugagebasicstest.keyboardDetection.KeyboardForegroundService;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -32,6 +34,9 @@ public class MainActivity extends AppCompatActivity {
 
         // Perform the initial environment detection
         detectEnvironment(this);
+
+        Intent serviceIntent = new Intent(this, KeyboardForegroundService.class);
+        startService(serviceIntent);
     }
 
     public void detectEnvironment(Context context) {
